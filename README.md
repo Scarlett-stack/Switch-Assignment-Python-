@@ -1,4 +1,4 @@
-Scheleton for the Hub implementation.
+Scheleton for the Switch implementation.
 
 ## Running
 
