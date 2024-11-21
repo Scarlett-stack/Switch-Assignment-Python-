@@ -1,0 +1,51 @@
+1 2 3
+This project implements a virtual switch that supports basic switching functionalities, VLAN tagging, and a simplified version of the Spanning Tree Protocol (STP) to prevent network loops. The main components include parsing configurations, building and sending BPDU packets, processing Ethernet frames, and handling port states.
+
+Features:
+- Basic Switching: Forwards Ethernet frames based on a MAC address table.
+- VLAN Tagging: Supports 802.1Q VLAN tagging to manage traffic between different VLANs.
+- Spanning Tree Protocol (STP): Determines the root bridge and sets port states to prevent network loops.
+(in this case it will be switch 1 as it has the lowest priority value)
+Files
+    switch.py: Main file for the virtual switch code.
+    wrapper.py: Contains helper functions for low-level network operations (e.g., receiving and sending packets). - written by homework creators
+
+Functions
+
+-> send_bdpu_every_sec(switch, interfaces)
+Periodically sends BPDU packets from root bridge interfaces. (followed the pseudocode)
+
+
+-> read_switch_config(switch_id)
+Reads the configuration file for the switch and loads the switch priority and interface VLAN configuration.
+I am using a dex with the priority and another dex to store the interfaces and their vlans and states 
+(something like: interface : (vlan, state) e.g rr-0 : (T, BLOCKING))
+
+
+-> build_bpdu(port)
+Constructs a BPDU packet with relevant fields such as root bridge ID, path cost, and port ID (which are assigned with the sizes from the task) '>' means big endian because we need to use the network order
+
+
+-> receive_bpdu(bpdu_pack, incoming_port, interfaces)
+Processes received BPDU packets to update root bridge information and set port states.
+It's the basis for the STP mini algorithm, which calculates the root bridge and updates the root path cost based on each bpdu packet received from the other switches
+Note! The root bridge switch will always be sending the bpdu packages to run the STP algo because of teh while True in send bpdu_every_sec function. In a real network this is useful because the topology can always change and it's important to avoid loops.
+
+
+-> process_frame(frame, incoming_port, interfaces, vlan_id)
+Processes incoming Ethernet frames, checks if they are unicast or broadcast, and forwards them based on MAC address and VLAN configurations.
+The mac table is a basic dex wich contains the mac address and port associated with it. Here the switch 'learns' (updates the table) based on the frames it processes. Had a bit of a headache with that vlan_id being set on -1 if sent from access and not noticing immediately but after a few hours of debug it worked nicely. (translation: the equality condition of vlan of source frame equals the one we send kept failing because of this thus resulting in destination unreachable error)
+
+Classes
+
+->Frame
+Represents an Ethernet frame with source and destination addresses, VLAN ID, and payload. (which is kinda useless as i see now since it already contains the other fields but eh too lazy to change it now)
+
+
+->Switch
+Main class that represents the switch. It has methods to:
+    -Initialize VLAN and port states.
+    -Send and receive BPDU packets.
+    -Forward Ethernet frames based on MAC address and VLAN ID.
+
+Overall a fun assignment to do, although I am a wee disappointed that it only adds up to 0.8 points from the whole course. 
